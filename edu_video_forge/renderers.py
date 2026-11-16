@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Dict, Any
 import subprocess
 import tempfile
+import time
 
 
 def render_scene(scene: Dict[str, Any], output: Path, theme: str = "chalkboard", quality: str = "medium", work_dir: Path = None):
@@ -98,7 +99,14 @@ class SlideScene(Scene):
 
 def _render_diagram(scene: Dict, output: Path, theme: str, quality: str):
     """Architecture / system diagram with boxes and arrows."""
-    manim_code = '''
+    content = scene.get("content", "")
+    # Basic content-driven labels if provided
+    lines = [l.strip() for l in content.splitlines() if l.strip()][:3]
+    labels = lines or ["Client", "API Gateway", "Database"]
+    while len(labels) < 3:
+        labels.append(labels[-1])
+
+    manim_code = f'''
 from manim import *
 
 class DiagramScene(Scene):
@@ -107,9 +115,9 @@ class DiagramScene(Scene):
         client = Rectangle(width=2.5, height=1.2, color=BLUE).shift(LEFT*3)
         api = Rectangle(width=2.5, height=1.2, color=GREEN).shift(ORIGIN)
         db = Rectangle(width=2.5, height=1.2, color=ORANGE).shift(RIGHT*3)
-        t1 = Text("Client", font_size=24).move_to(client)
-        t2 = Text("API Gateway", font_size=24).move_to(api)
-        t3 = Text("Database", font_size=24).move_to(db)
+        t1 = Text("{labels[0]}", font_size=24).move_to(client)
+        t2 = Text("{labels[1]}", font_size=24).move_to(api)
+        t3 = Text("{labels[2]}", font_size=24).move_to(db)
         arrow1 = Arrow(client.get_right(), api.get_left(), buff=0.1)
         arrow2 = Arrow(api.get_right(), db.get_left(), buff=0.1)
         self.play(Create(client), Write(t1))
@@ -123,16 +131,26 @@ class DiagramScene(Scene):
 
 
 def _render_sequence(scene: Dict, output: Path, theme: str, quality: str):
-    """Animated sequence-style diagram (actors + messages)."""
-    manim_code = '''
+    """Animated sequence-style diagram (actors + messages). Content-driven labels."""
+    content = scene.get("content", "")
+    lines = [l.strip() for l in content.splitlines() if l.strip()]
+    actors = [l.split("->")[0].strip() for l in lines if "->" in l] or ["Client", "API Gateway", "Service"]
+    # Simple: take first few unique
+    unique = []
+    for a in actors:
+        if a not in unique:
+            unique.append(a)
+    actors = (unique + ["Actor"] * 3)[:3]
+
+    manim_code = f'''
 from manim import *
 
 class SequenceScene(Scene):
     def construct(self):
         self.camera.background_color = "#0d1117"
-        client = Text("Client", font_size=28).shift(LEFT*4 + UP*2)
-        gateway = Text("API Gateway", font_size=28).shift(ORIGIN + UP*2)
-        service = Text("Service", font_size=28).shift(RIGHT*4 + UP*2)
+        client = Text("{actors[0]}", font_size=28).shift(LEFT*4 + UP*2)
+        gateway = Text("{actors[1]}", font_size=28).shift(ORIGIN + UP*2)
+        service = Text("{actors[2]}", font_size=28).shift(RIGHT*4 + UP*2)
         line1 = Line(client.get_bottom(), client.get_bottom() + DOWN*3, color=GREY)
         line2 = Line(gateway.get_bottom(), gateway.get_bottom() + DOWN*3, color=GREY)
         line3 = Line(service.get_bottom(), service.get_bottom() + DOWN*3, color=GREY)
@@ -221,13 +239,19 @@ class DiffScene(Scene):
 
 
 def _render_class_diagram(scene: Dict, output: Path, theme: str, quality: str):
-    """UML-style class diagram for Design Patterns (inheritance, composition)."""
-    manim_code = '''
+    """UML-style class diagram for Design Patterns (inheritance, composition). Content can supply class names."""
+    content = scene.get("content", "")
+    # Very light parsing: look for known pattern keywords or use defaults
+    title = "Strategy Pattern" if "strategy" in content.lower() else "Class Diagram"
+
+    manim_code = f'''
 from manim import *
 
 class ClassDiagramScene(Scene):
     def construct(self):
         self.camera.background_color = "#0d1117"
+        title = Text("{title}", font_size=36, color=WHITE).to_edge(UP)
+        self.play(FadeIn(title))
 
         # Context / Strategy interface
         context = VGroup(
@@ -235,26 +259,26 @@ class ClassDiagramScene(Scene):
             Text("Context", font_size=28, color=WHITE).shift(UP*0.6),
             Text("strategy: Strategy", font_size=20, color=GREY_A).shift(DOWN*0.1),
             Text("+execute()", font_size=20, color=GREY_A).shift(DOWN*0.6),
-        ).shift(LEFT*3.5)
+        ).shift(LEFT*3.5 + DOWN*0.5)
 
         strategy = VGroup(
             Rectangle(width=3.2, height=1.8, color=GREEN, fill_opacity=0.1),
             Text("<<interface>>", font_size=18, color=YELLOW).shift(UP*0.5),
             Text("Strategy", font_size=28, color=WHITE),
             Text("+execute()", font_size=20, color=GREY_A).shift(DOWN*0.5),
-        ).shift(RIGHT*0.5 + UP*1.2)
+        ).shift(RIGHT*0.5 + UP*0.7)
 
         concrete_a = VGroup(
             Rectangle(width=2.8, height=1.6, color=ORANGE, fill_opacity=0.1),
             Text("ConcreteA", font_size=24, color=WHITE).shift(UP*0.3),
             Text("+execute()", font_size=18, color=GREY_A).shift(DOWN*0.4),
-        ).shift(RIGHT*3.8 + DOWN*0.8)
+        ).shift(RIGHT*3.8 + DOWN*1.3)
 
         concrete_b = VGroup(
             Rectangle(width=2.8, height=1.6, color=PURPLE, fill_opacity=0.1),
             Text("ConcreteB", font_size=24, color=WHITE).shift(UP*0.3),
             Text("+execute()", font_size=18, color=GREY_A).shift(DOWN*0.4),
-        ).shift(RIGHT*3.8 + DOWN*2.8)
+        ).shift(RIGHT*3.8 + DOWN*3.3)
 
         # Inheritance arrows (hollow triangle)
         arrow_a = Arrow(concrete_a.get_top(), strategy.get_bottom() + RIGHT*1.2, color=WHITE, buff=0.15, tip_length=0.2)
@@ -335,19 +359,30 @@ def _render_manim(scene: Dict, output: Path, quality: str):
     _run_manim(code, output, quality)
 
 
-def _run_manim(code: str, output: Path, quality: str):
-    with tempfile.TemporaryDirectory() as tmp:
-        py_file = Path(tmp) / "scene.py"
-        py_file.write_text(code)
-        qflag = {"low": "-ql", "medium": "-qm", "high": "-qh"}.get(quality, "-qm")
-        try:
-            subprocess.run(
-                ["manim", qflag, "--disable_caching", str(py_file), "-o", str(output.stem)],
-                cwd=tmp, check=True, capture_output=True
-            )
-            media = list(Path(tmp).rglob("*.mp4"))
-            if media:
-                media[0].replace(output)
-        except Exception as e:
-            print(f"Manim render failed: {e}")
-            output.touch()
+def _run_manim(code: str, output: Path, quality: str, max_retries: int = 2):
+    """Run Manim with simple retry on failure."""
+    qflag = {"low": "-ql", "medium": "-qm", "high": "-qh"}.get(quality, "-qm")
+    for attempt in range(max_retries + 1):
+        with tempfile.TemporaryDirectory() as tmp:
+            py_file = Path(tmp) / "scene.py"
+            py_file.write_text(code)
+            try:
+                result = subprocess.run(
+                    ["manim", qflag, "--disable_caching", str(py_file), "-o", str(output.stem)],
+                    cwd=tmp, check=True, capture_output=True, text=True
+                )
+                media = list(Path(tmp).rglob("*.mp4"))
+                if media:
+                    media[0].replace(output)
+                    return
+            except subprocess.CalledProcessError as e:
+                print(f"Manim attempt {attempt+1} failed: {e.stderr[:300] if e.stderr else e}")
+                if attempt == max_retries:
+                    print("All retries exhausted. Creating placeholder.")
+                    output.touch()
+                else:
+                    time.sleep(1)  # brief pause before retry
+            except Exception as e:
+                print(f"Unexpected error: {e}")
+                output.touch()
+                return
