@@ -1,7 +1,7 @@
 [project]
 name = "edu-video-forge"
-version = "0.1.0"
-description = "Generate educational videos from scripts with TTS, Manim, WebGL"
+version = "0.2.0"
+description = "Generate professional educational videos from scripts with TTS, Manim, diagrams, and more"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
@@ -14,6 +14,10 @@ dependencies = [
     "markdown>=3.5",
     "pyyaml>=6.0",
 ]
+
+[project.optional-dependencies]
+voiceover = ["manim-voiceover[gtts]"]
+voiceover-gemini = ["manim-voiceover[gemini]"]
 
 [project.scripts]
 edu-video-forge = "edu_video_forge.__main__:app"
