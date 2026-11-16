@@ -29,6 +29,8 @@ def render_scene(scene: Dict[str, Any], output: Path, theme: str = "chalkboard",
         _render_terminal(scene, output, theme, quality)
     elif scene_type == "diff":
         _render_diff(scene, output, theme, quality)
+    elif scene_type == "class-diagram" or scene_type == "uml":
+        _render_class_diagram(scene, output, theme, quality)
     elif scene_type == "webgl":
         _render_webgl(scene, output, work_dir)
     elif scene_type == "manim":
@@ -213,6 +215,59 @@ class DiffScene(Scene):
         label2 = Text("After", color=GREEN).next_to(after, UP)
         self.play(FadeIn(label1), Create(before))
         self.play(FadeIn(label2), Create(after))
+        self.wait(2)
+'''
+    _run_manim(manim_code, output, quality)
+
+
+def _render_class_diagram(scene: Dict, output: Path, theme: str, quality: str):
+    """UML-style class diagram for Design Patterns (inheritance, composition)."""
+    manim_code = '''
+from manim import *
+
+class ClassDiagramScene(Scene):
+    def construct(self):
+        self.camera.background_color = "#0d1117"
+
+        # Context / Strategy interface
+        context = VGroup(
+            Rectangle(width=3.2, height=2.2, color=BLUE, fill_opacity=0.1),
+            Text("Context", font_size=28, color=WHITE).shift(UP*0.6),
+            Text("strategy: Strategy", font_size=20, color=GREY_A).shift(DOWN*0.1),
+            Text("+execute()", font_size=20, color=GREY_A).shift(DOWN*0.6),
+        ).shift(LEFT*3.5)
+
+        strategy = VGroup(
+            Rectangle(width=3.2, height=1.8, color=GREEN, fill_opacity=0.1),
+            Text("<<interface>>", font_size=18, color=YELLOW).shift(UP*0.5),
+            Text("Strategy", font_size=28, color=WHITE),
+            Text("+execute()", font_size=20, color=GREY_A).shift(DOWN*0.5),
+        ).shift(RIGHT*0.5 + UP*1.2)
+
+        concrete_a = VGroup(
+            Rectangle(width=2.8, height=1.6, color=ORANGE, fill_opacity=0.1),
+            Text("ConcreteA", font_size=24, color=WHITE).shift(UP*0.3),
+            Text("+execute()", font_size=18, color=GREY_A).shift(DOWN*0.4),
+        ).shift(RIGHT*3.8 + DOWN*0.8)
+
+        concrete_b = VGroup(
+            Rectangle(width=2.8, height=1.6, color=PURPLE, fill_opacity=0.1),
+            Text("ConcreteB", font_size=24, color=WHITE).shift(UP*0.3),
+            Text("+execute()", font_size=18, color=GREY_A).shift(DOWN*0.4),
+        ).shift(RIGHT*3.8 + DOWN*2.8)
+
+        # Inheritance arrows (hollow triangle)
+        arrow_a = Arrow(concrete_a.get_top(), strategy.get_bottom() + RIGHT*1.2, color=WHITE, buff=0.15, tip_length=0.2)
+        arrow_b = Arrow(concrete_b.get_top(), strategy.get_bottom() + RIGHT*0.4, color=WHITE, buff=0.15, tip_length=0.2)
+
+        # Composition
+        comp_arrow = Arrow(context.get_right(), strategy.get_left(), color=YELLOW, buff=0.2)
+
+        self.play(FadeIn(context))
+        self.play(FadeIn(strategy))
+        self.play(Create(comp_arrow))
+        self.play(FadeIn(concrete_a), FadeIn(concrete_b))
+        self.play(Create(arrow_a), Create(arrow_b))
         self.wait(2)
 '''
     _run_manim(manim_code, output, quality)
