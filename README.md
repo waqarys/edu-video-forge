@@ -16,6 +16,7 @@ Supports:
 **Integrations**:
 - CLI designed for easy triggering by Grok Bot, Claude, OpenClaw, or any agent
 - Standard MP4 output (with optional chapters and SRT) ready for OBS Studio, CapCut, or Final Cut Pro
+- Easy GIF export of short loops via FFmpeg post-processing
 
 ## Scene Types
 
@@ -25,6 +26,9 @@ Supports:
 ### For Experienced Professionals (industry standard)
 - `slides` — Clean dark-mode slides with title + bullets (GitHub-style)
 - `diagram` / `architecture` — Boxes, arrows, system flows
+- `sequence` — Animated sequence diagrams (actors + messages)
+- `metrics` / `chart` — Animated bar charts / metrics growth
+- `mermaid` — Mermaid syntax support (saves .mmd + animated fallback)
 - `terminal` — Animated CLI / terminal sessions
 - `diff` — Side-by-side before/after code comparison
 - `whiteboard` — Clean professional whiteboard (lighter than chalkboard)
@@ -32,7 +36,7 @@ Supports:
 - `webgl` — Three.js / WebGL interactive-style visualizations
 - `manim` — Full custom Manim scenes
 
-These match what senior engineers and tech companies use in internal talks, conference talks, and course content (architecture diagrams, terminal demos, clean slides, diffs).
+These match what senior engineers and tech companies use in internal talks, conference talks, architecture reviews, and advanced courses.
 
 ## Quick Start
 
@@ -40,6 +44,7 @@ These match what senior engineers and tech companies use in internal talks, conf
 - Python 3.10+
 - FFmpeg in PATH (`brew install ffmpeg` / `choco install ffmpeg` / `apt install ffmpeg`)
 - For best math rendering: LaTeX (MiKTeX on Windows, MacTeX on macOS)
+- Optional: mermaid-cli (`npm install -g @mermaid-js/mermaid-cli`) for full Mermaid rendering
 
 ```bash
 git clone https://github.com/waqarys/edu-video-forge.git
@@ -58,7 +63,12 @@ python -m edu_video_forge generate examples/quadratic_formula.md --output quadra
 
 **Professional / system design:**
 ```bash
-python -m edu_video_forge generate examples/professional_system_design.md --output system_design.mp4 --theme dark
+python -m edu_video_forge generate examples/professional_system_design.md --output system_design.mp4
+```
+
+**Advanced (sequence + metrics + mermaid):**
+```bash
+python -m edu_video_forge generate examples/advanced_professional.md --output advanced.mp4
 ```
 
 **Advanced AI series:**
@@ -66,28 +76,33 @@ python -m edu_video_forge generate examples/professional_system_design.md --outp
 python -m edu_video_forge generate examples/transformer_attention.md --output attention.mp4
 ```
 
+### GIF export (short loops)
+After generating an MP4, create a GIF with:
+```bash
+ffmpeg -i advanced.mp4 -vf "fps=10,scale=640:-1:flags=lanczos" -c:v gif advanced.gif
+```
+
 ## Script Format
 
 Markdown with clear scene markers (also supports JSON):
 
 ```markdown
-## Scene: slides
-**Narration:** For experienced engineers we use clean slides.
+## Scene: sequence
+**Narration:** Request sequence through the system.
 **Content:**
-Key Principles
+Client -> Gateway -> Service
 
-- Single Responsibility
-- Independent Deployability
-
-## Scene: diagram
-**Narration:** Request flow through the system.
+## Scene: metrics
+**Narration:** Quarterly growth.
 **Content:**
-Client -> API -> Database
+Q1 Q2 Q3 Q4
 
-## Scene: terminal
-**Narration:** Deploying the service.
+## Scene: mermaid
+**Narration:** Complex diagram from Mermaid.
 **Content:**
-$ kubectl apply -f deployment.yaml
+graph TD
+    A-->B
+    B-->C
 ```
 
 ## Architecture
