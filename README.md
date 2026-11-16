@@ -4,17 +4,35 @@
 
 Supports:
 - Audio from script (TTS with precise timestamps)
-- Chalkboard writing effects
+- Chalkboard writing effects (ideal for students)
+- Professional scenes for experienced engineers (5–20+ years)
 - Generating code videos (typing, highlighting, progressive reveal)
 - Explaining concepts using WebGL / Three.js
 - Mathematical animations, effects, and diagrams (powered by Manim)
-- Courses for school students (high-school math, science) and advanced professionals (e.g. Transformer architecture series)
+- Courses for school students and advanced professionals (system design, transformers, architecture)
 
 **Platforms**: Works on Windows laptop and Mac Studio (and Linux). Python + Manim Community + FFmpeg + edge-tts.
 
 **Integrations**:
 - CLI designed for easy triggering by Grok Bot, Claude, OpenClaw, or any agent
 - Standard MP4 output (with optional chapters and SRT) ready for OBS Studio, CapCut, or Final Cut Pro
+
+## Scene Types
+
+### For Students
+- `chalkboard` — Hand-writing style on dark board
+
+### For Experienced Professionals (industry standard)
+- `slides` — Clean dark-mode slides with title + bullets (GitHub-style)
+- `diagram` / `architecture` — Boxes, arrows, system flows
+- `terminal` — Animated CLI / terminal sessions
+- `diff` — Side-by-side before/after code comparison
+- `whiteboard` — Clean professional whiteboard (lighter than chalkboard)
+- `code` — Syntax-highlighted code with progressive reveal
+- `webgl` — Three.js / WebGL interactive-style visualizations
+- `manim` — Full custom Manim scenes
+
+These match what senior engineers and tech companies use in internal talks, conference talks, and course content (architecture diagrams, terminal demos, clean slides, diffs).
 
 ## Quick Start
 
@@ -31,10 +49,21 @@ source .venv/bin/activate          # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### Generate your first video
+### Generate videos
 
+**High-school style:**
 ```bash
-python -m edu_video_forge generate examples/quadratic_formula.md --output quadratic.mp4 --voice en-US-AriaNeural --theme chalkboard
+python -m edu_video_forge generate examples/quadratic_formula.md --output quadratic.mp4 --theme chalkboard
+```
+
+**Professional / system design:**
+```bash
+python -m edu_video_forge generate examples/professional_system_design.md --output system_design.mp4 --theme dark
+```
+
+**Advanced AI series:**
+```bash
+python -m edu_video_forge generate examples/transformer_attention.md --output attention.mp4
 ```
 
 ## Script Format
@@ -42,58 +71,53 @@ python -m edu_video_forge generate examples/quadratic_formula.md --output quadra
 Markdown with clear scene markers (also supports JSON):
 
 ```markdown
-# Quadratic Formula
-
-## Scene: chalkboard
-**Narration:** The quadratic formula solves equations of the form a x squared plus b x plus c equals zero.
+## Scene: slides
+**Narration:** For experienced engineers we use clean slides.
 **Content:**
-x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}
+Key Principles
 
-## Scene: code
-**Narration:** Here is a simple Python function.
+- Single Responsibility
+- Independent Deployability
+
+## Scene: diagram
+**Narration:** Request flow through the system.
 **Content:**
-```python
-def quadratic(a, b, c):
-    d = b**2 - 4*a*c
-    return (-b + d**0.5) / (2*a)
-```
+Client -> API -> Database
+
+## Scene: terminal
+**Narration:** Deploying the service.
+**Content:**
+$ kubectl apply -f deployment.yaml
 ```
 
 ## Architecture
 
 1. Parse script into ordered scenes
 2. Generate TTS audio + word/sentence timestamps per scene (edge-tts)
-3. Render visual clips:
-   - `chalkboard` → dark background + Manim `Write` animation
-   - `code` → Manim `Code` with line-by-line or character reveal
-   - `webgl` → Generate self-contained Three.js HTML (record via browser or headless)
-   - `manim` → Full custom Manim scene
-4. Compose final video with FFmpeg (exact sync to narration durations, crossfades)
+3. Render visual clips according to scene type
+4. Compose final video with FFmpeg (sync to narration)
 5. Export MP4 + SRT subtitles + chapters metadata
 
 ## Using with Agents (OpenClaw / Grok / Claude)
-
-Agents can simply execute the CLI:
 
 ```bash
 python -m edu_video_forge generate --script course/lesson01.md --output out/lesson01.mp4 --quality high
 ```
 
-Or use the Python API:
+Or Python API:
 
 ```python
 from edu_video_forge import generate_video
-generate_video("script.md", "output.mp4", theme="chalkboard")
+generate_video("script.md", "output.mp4")
 ```
 
 ## Project Structure
 
-- `edu_video_forge/` – core package
-- `examples/` – ready-to-run scripts (high-school math + Transformer attention)
-- `requirements.txt`
-- Full pipeline is modular and testable
+- `edu_video_forge/` – core package (parser, renderers, pipeline, CLI)
+- `examples/` – ready-to-run scripts (students + professionals + advanced)
+- `requirements.txt` + `pyproject.toml`
 
 ## License
 MIT
 
-Built to help educators and course creators produce high-quality animated videos entirely from a laptop.
+Built to help educators and course creators produce high-quality animated videos entirely from a laptop — from high-school math to senior engineering content.
