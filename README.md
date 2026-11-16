@@ -9,7 +9,7 @@ Supports:
 - Generating code videos (typing, highlighting, progressive reveal)
 - Explaining concepts using WebGL / Three.js
 - Mathematical animations, effects, and diagrams (powered by Manim)
-- Courses for school students and advanced professionals (system design, transformers, architecture)
+- Courses for school students and advanced professionals (system design, transformers, architecture, **design patterns**)
 
 **Platforms**: Works on Windows laptop and Mac Studio (and Linux). Python + Manim Community + FFmpeg + edge-tts.
 
@@ -27,6 +27,7 @@ Supports:
 - `slides` — Clean dark-mode slides with title + bullets (GitHub-style)
 - `diagram` / `architecture` — Boxes, arrows, system flows
 - `sequence` — Animated sequence diagrams (actors + messages)
+- `class-diagram` / `uml` — UML class diagrams with inheritance & composition (ideal for Design Patterns)
 - `metrics` / `chart` — Animated bar charts / metrics growth
 - `mermaid` — Mermaid syntax support (saves .mmd + animated fallback)
 - `terminal` — Animated CLI / terminal sessions
@@ -66,6 +67,11 @@ python -m edu_video_forge generate examples/quadratic_formula.md --output quadra
 python -m edu_video_forge generate examples/professional_system_design.md --output system_design.mp4
 ```
 
+**Design Patterns (Strategy):**
+```bash
+python -m edu_video_forge generate examples/design_patterns_strategy.md --output strategy.mp4
+```
+
 **Advanced (sequence + metrics + mermaid):**
 ```bash
 python -m edu_video_forge generate examples/advanced_professional.md --output advanced.mp4
@@ -92,17 +98,15 @@ Markdown with clear scene markers (also supports JSON):
 **Content:**
 Client -> Gateway -> Service
 
+## Scene: class-diagram
+**Narration:** UML for the Strategy pattern.
+**Content:**
+Context uses Strategy interface
+
 ## Scene: metrics
 **Narration:** Quarterly growth.
 **Content:**
 Q1 Q2 Q3 Q4
-
-## Scene: mermaid
-**Narration:** Complex diagram from Mermaid.
-**Content:**
-graph TD
-    A-->B
-    B-->C
 ```
 
 ## Architecture
@@ -126,13 +130,22 @@ from edu_video_forge import generate_video
 generate_video("script.md", "output.mp4")
 ```
 
+## Roadmap / Known Gaps (from open-source comparison)
+
+High-priority items for production-quality course content:
+- Optional `manim-voiceover` integration for tighter word-level animation sync + better TTS backends
+- Content-driven (not hardcoded) sequence and class diagrams
+- Optional background music track
+- Simple retry/self-healing on Manim render failures
+- Chapter markers in final MP4
+
 ## Project Structure
 
 - `edu_video_forge/` – core package (parser, renderers, pipeline, CLI)
-- `examples/` – ready-to-run scripts (students + professionals + advanced)
+- `examples/` – ready-to-run scripts (students + professionals + design patterns)
 - `requirements.txt` + `pyproject.toml`
 
 ## License
 MIT
 
-Built to help educators and course creators produce high-quality animated videos entirely from a laptop — from high-school math to senior engineering content.
+Built to help educators and course creators produce high-quality animated videos entirely from a laptop — from high-school math to senior engineering content (including Design Patterns).
