@@ -10,12 +10,13 @@ Supports:
 - Explaining concepts using WebGL / Three.js
 - Mathematical animations, effects, and diagrams (powered by Manim)
 - Courses for school students and advanced professionals (system design, transformers, architecture, **design patterns**)
+- Optional background music and embedded chapter markers
 
 **Platforms**: Works on Windows laptop and Mac Studio (and Linux). Python + Manim Community + FFmpeg + edge-tts.
 
 **Integrations**:
 - CLI designed for easy triggering by Grok Bot, Claude, OpenClaw, or any agent
-- Standard MP4 output (with optional chapters and SRT) ready for OBS Studio, CapCut, or Final Cut Pro
+- Standard MP4 output (with chapters and SRT) ready for OBS Studio, CapCut, or Final Cut Pro
 - Easy GIF export of short loops via FFmpeg post-processing
 
 ## Scene Types
@@ -25,8 +26,8 @@ Supports:
 
 ### For Experienced Professionals (industry standard)
 - `slides` — Clean dark-mode slides with title + bullets (GitHub-style)
-- `diagram` / `architecture` — Boxes, arrows, system flows
-- `sequence` — Animated sequence diagrams (actors + messages)
+- `diagram` / `architecture` — Boxes, arrows, system flows (content-aware labels)
+- `sequence` — Animated sequence diagrams (content-aware actors)
 - `class-diagram` / `uml` — UML class diagrams with inheritance & composition (ideal for Design Patterns)
 - `metrics` / `chart` — Animated bar charts / metrics growth
 - `mermaid` — Mermaid syntax support (saves .mmd + animated fallback)
@@ -51,7 +52,7 @@ These match what senior engineers and tech companies use in internal talks, conf
 git clone https://github.com/waqarys/edu-video-forge.git
 cd edu-video-forge
 python -m venv .venv
-source .venv/bin/activate          # Windows: .venv\Scripts\activate
+source .venv/bin/activate          # Windows: .venv\\Scripts\\activate
 pip install -r requirements.txt
 ```
 
@@ -70,6 +71,13 @@ python -m edu_video_forge generate examples/professional_system_design.md --outp
 **Design Patterns (Strategy):**
 ```bash
 python -m edu_video_forge generate examples/design_patterns_strategy.md --output strategy.mp4
+```
+
+**With background music and chapters (default):**
+```bash
+python -m edu_video_forge generate examples/design_patterns_strategy.md \
+  --output strategy.mp4 \
+  --bg-music /path/to/calm-music.mp3
 ```
 
 **Advanced (sequence + metrics + mermaid):**
@@ -113,9 +121,11 @@ Q1 Q2 Q3 Q4
 
 1. Parse script into ordered scenes
 2. Generate TTS audio + word/sentence timestamps per scene (edge-tts)
-3. Render visual clips according to scene type
+3. Render visual clips according to scene type (with retry on Manim failure)
 4. Compose final video with FFmpeg (sync to narration)
-5. Export MP4 + SRT subtitles + chapters metadata
+5. Optionally mix low-volume background music
+6. Embed chapter markers from scene narration
+7. Export MP4 + SRT subtitles
 
 ## Using with Agents (OpenClaw / Grok / Claude)
 
@@ -127,17 +137,26 @@ Or Python API:
 
 ```python
 from edu_video_forge import generate_video
-generate_video("script.md", "output.mp4")
+generate_video("script.md", "output.mp4", bg_music="music.mp3")
 ```
 
-## Roadmap / Known Gaps (from open-source comparison)
+## Optional: Higher-quality Voiceover
 
-High-priority items for production-quality course content:
-- Optional `manim-voiceover` integration for tighter word-level animation sync + better TTS backends
-- Content-driven (not hardcoded) sequence and class diagrams
-- Optional background music track
-- Simple retry/self-healing on Manim render failures
-- Chapter markers in final MP4
+For tighter word-level animation sync and better voices, you can install the official Manim Voiceover plugin and use it in custom `manim` scenes:
+
+```bash
+pip install manim-voiceover[gtts]          # free gTTS
+# or
+pip install manim-voiceover[gemini]        # recommended (needs Google credentials)
+```
+
+See https://voiceover.manim.community for examples using `VoiceoverScene`.
+
+## Roadmap / Remaining Gaps
+
+- Deeper automatic integration of manim-voiceover into all scene types (currently best used for custom manim scenes)
+- More advanced content-driven diagram parsing (PlantUML/Mermaid full render)
+- Voice cloning options
 
 ## Project Structure
 
