@@ -9,3 +9,7 @@ pyyaml>=6.0
 playwright>=1.40.0
 # Optional for advanced WebGL recording
 # playwright install chromium
+
+# Optional high-quality voiceover with word-level timing (install separately if desired):
+# manim-voiceover[gtts]   # free gTTS backend
+# manim-voiceover[gemini] # recommended AI voices (requires Google credentials)
