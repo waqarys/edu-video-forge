@@ -45,7 +45,7 @@ These match what senior engineers and tech companies use in internal talks, conf
 ### Prerequisites
 - Python 3.10+
 - FFmpeg in PATH (`brew install ffmpeg` / `choco install ffmpeg` / `apt install ffmpeg`)
-- For best math rendering: LaTeX (MiKTeX on Windows, MacTeX on macOS)
+- For best math rendering: a LaTeX distribution (soft requirement, see [Math / LaTeX](#math--latex))
 - Optional: mermaid-cli (`npm install -g @mermaid-js/mermaid-cli`) for full Mermaid rendering
 
 ```bash
@@ -116,6 +116,30 @@ Context uses Strategy interface
 **Content:**
 Q1 Q2 Q3 Q4
 ```
+
+## Math / LaTeX
+
+Manim draws formulas with LaTeX, so a TeX distribution is a **soft requirement**: everything renders
+without it, but math then falls back to plain text.
+
+- **Windows:** [MiKTeX](https://miktex.org/) (enable "install missing packages on the fly")
+- **macOS:** [MacTeX](https://tug.org/mactex/) (or BasicTeX + `sudo tlmgr install standalone preview doublestroke`)
+- **Linux:** TeX Live, e.g. `sudo apt install texlive-latex-base texlive-latex-extra texlive-fonts-recommended dvisvgm`
+
+`latex` and `dvisvgm` must be on PATH (check with `latex --version` and `dvisvgm --version`).
+
+How chalkboard content is read (one board row per line):
+
+| Content line | Rendered as |
+|---|---|
+| `$$x = \frac{-b \pm \sqrt{b^2-4ac}}{2a}$$` or `\[ ... \]` | `MathTex` (dollar signs stripped) |
+| `Roots are $x_1$ and $x_2$.` (inline `$...$` / `\( ... \)`) | `Tex`: text with inline math |
+| `\frac{1}{2}` (backslash commands, no dollars; legacy) | `MathTex` |
+| anything else | `Text` |
+
+Write `\$` for a literal dollar sign. If LaTeX is missing or a formula fails to compile, that line is
+drawn as plain text without the `$` delimiters and a warning is printed. Parsing lives in
+`edu_video_forge/latex.py` (tests: `python -m unittest discover tests`).
 
 ## Architecture
 

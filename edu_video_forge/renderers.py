@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Dict, Any
+import shutil
 import subprocess
 import tempfile
 import time
@@ -41,20 +42,51 @@ def render_scene(scene: Dict[str, Any], output: Path, theme: str = "chalkboard",
 
 
 def _render_chalkboard(scene: Dict, output: Path, theme: str, quality: str):
-    """Chalkboard-style Write animation (best for students)."""
+    """Chalkboard-style Write animation (best for students).
+
+    Each content line is drawn on its own row: ``$$...$$`` / ``\\[...\\]`` lines become ``MathTex``,
+    lines with inline ``$...$`` become ``Tex`` (text + math), the rest ``Text``. Dollar delimiters are
+    never shown. Without a LaTeX install (or if a formula fails to compile) the line falls back to
+    plain ``Text`` and a warning is printed. See edu_video_forge/latex.py for the expected format.
+    """
+    from .latex import classify_line, latex_available, strip_math_delimiters
+
     bg = "#1a1a1a" if theme == "chalkboard" else "#ffffff"
     text_color = "WHITE" if theme == "chalkboard" else "BLACK"
-    content = scene.get("content", "Hello World").replace("\\", "\\\\")[:200]
+    raw = scene.get("content", "Hello World")[:500]
+    rows = [classify_line(ln.strip()) + (strip_math_delimiters(ln.strip()),)
+            for ln in raw.splitlines() if ln.strip()] or [("text", "Hello World", "Hello World")]
+    use_tex = latex_available()
+    if not use_tex and any(k != "text" for k, _, _ in rows):
+        print("Warning: LaTeX (latex + dvisvgm) not found - math is drawn as plain text. "
+              "Install MiKTeX / MacTeX / TeX Live for proper formulas.")
 
     manim_code = f'''
 from manim import *
 
+ROWS = {rows!r}
+USE_TEX = {use_tex!r}
+
+
+def make_row(kind, payload, plain):
+    if USE_TEX and kind in ("math", "mixed"):
+        try:
+            mob = MathTex(payload, color={text_color}) if kind == "math" else Tex(payload, color={text_color})
+            return mob.scale(1.1 if kind == "math" else 0.9)
+        except Exception as e:  # LaTeX error -> readable text instead of a failed render
+            print(f"Warning: LaTeX failed for {{payload!r}} ({{e}}); using plain text")
+    return Text(plain if kind != "text" else payload, color={text_color}, font_size=32)
+
+
 class ChalkboardScene(Scene):
     def construct(self):
         self.camera.background_color = "{bg}"
-        text = MathTex(r"{content}") if "\\" in r"{content}" else Text("{content}", color={text_color}, font_size=32)
-        text.scale(0.7)
-        self.play(Write(text), run_time=3)
+        group = VGroup(*[make_row(*r) for r in ROWS]).arrange(DOWN, buff=0.45)
+        if group.width > config.frame_width - 1:
+            group.scale_to_fit_width(config.frame_width - 1)
+        if group.height > config.frame_height - 1:
+            group.scale_to_fit_height(config.frame_height - 1)
+        self.play(Write(group), run_time=3)
         self.wait(1)
 '''
     _run_manim(manim_code, output, quality)
@@ -373,7 +405,7 @@ def _run_manim(code: str, output: Path, quality: str, max_retries: int = 2):
                 )
                 media = list(Path(tmp).rglob("*.mp4"))
                 if media:
-                    media[0].replace(output)
+                    shutil.move(str(media[0]), str(output))  # works across filesystems (/tmp vs project)
                     return
             except subprocess.CalledProcessError as e:
                 print(f"Manim attempt {attempt+1} failed: {e.stderr[:300] if e.stderr else e}")
